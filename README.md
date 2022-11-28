@@ -9,7 +9,8 @@ Libraries:
 - [doobie](https://tpolecat.github.io/doobie/)
 - [pureconfig](https://pureconfig.github.io/)
 - [log4cats](https://christopherdavenport.github.io/log4cats/)
-- apache kafka
+
+[//]: # (- apache kafka)
 
 SBT plugins:
 - [scalafmt](https://scalameta.org/scalafmt/) for code formatting
@@ -17,7 +18,8 @@ SBT plugins:
 
 It uses [docker-compose](https://docs.docker.com/compose/) to pack the server together with:
 - a [PostgreSQL](https://www.postgresql.org/) database.
-- an [Apache Kafka](https://kafka.apache.org/) local instance.
+
+[//]: # (- an [Apache Kafka]&#40;https://kafka.apache.org/&#41; local instance.)
 
 Server defines two endpoints:
 - `GET /users/[UUID]` for fetching users from the database
