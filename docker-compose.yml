@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:10
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: typelevelstack
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - ./docker/postgres:/docker-entrypoint-initdb.d
