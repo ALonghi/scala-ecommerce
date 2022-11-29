@@ -1,7 +1,6 @@
 # Typelevel stack backend
 
-This project contains a small skeleton of a simple e-commerce
-store using to showcase the typelevel stack. 
+This project contains a small skeleton of a simple CRUD to showcase the usage of the typelevel stack. 
 
 Libraries:
 - [cats](https://typelevel.org/cats/) (Cats effect 3)
