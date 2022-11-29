@@ -1,13 +1,43 @@
-version: "3"
+version: "3.9"
 
 services:
-  db:
-    image: postgres:10
+  scalacommerce_postgres:
+    image: postgres:15.1
     ports:
       - "5432:5432"
     environment:
       POSTGRES_DB: typelevelstack
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
+    networks:
+      - scalacommerce_network
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 20s
+    init: true
+
+  scalacommerce_app:
+    image: docker.io/library/scala-ecommerce:1.0.0-SNAPSHOT
+    container_name: scalacommerce-1.0.0-SNAPSHOT
+    depends_on:
+      - scalacommerce_postgres
+    networks:
+      - scalacommerce_network
+    ports:
+      - "8080:8080"
     volumes:
-      - ./docker/postgres:/docker-entrypoint-initdb.d
+      - ./logs:/opt/docker/log
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 20s
+    init: true
+
+networks:
+  scalacommerce_network:
+    driver: bridge

@@ -1,43 +1,39 @@
 package scalacommerce.server
 
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityEncoder._
-import org.http4s.dsl.Http4sDsl
+import cats.effect.unsafe.IORuntime
+import cats.effect.unsafe.IORuntime.global
+import io.circe.{ Encoder, Printer }
+import io.circe.generic.auto._
+import org.http4s.EntityEncoder
+import org.http4s.circe._
+import org.http4s.rho.RhoRoutes
+import org.http4s.rho.swagger.SwaggerSyntax
 import scalacommerce.controller.UserController
-import scalacommerce.model.UserRequest
+import scalacommerce.model.fe.user.{ UserCreateRequest, UserUpdateRequest }
 
-object Routes {
+class Routes(
+    swaggerSyntax: SwaggerSyntax[IO],
+    users:         UserController[IO]
+) {
 
-  def userRoutes(users: UserController): HttpRoutes[IO] = {
-    val dsl = new Http4sDsl[IO] {}
-    import dsl._
-    HttpRoutes.of[IO] {
+  implicit val ioRuntime: IORuntime = global
 
-      case GET -> Root / "healthy" => Ok()
+  import swaggerSyntax._
+  implicit def circeEntityEncoder[F[_], A: Encoder]: EntityEncoder[F, A] =
+    jsonEncoderWithPrinterOf(Printer.noSpaces.copy(dropNullValues = true))
 
-      case GET -> Root / "ready" => Ok()
+  val routes: RhoRoutes[IO] = new RhoRoutes[IO] {
 
-      case GET -> Root / "users" =>
-        for {
-          users <- users.getAll()
-          resp  <- Ok(users)
-        } yield resp
+    "Get users" ** "Users" @@ GET / "api" / "users" |>> users.getAll()
 
-      case GET -> Root / "users" / UUIDVar(id) =>
-        for {
-          user <- users.get(id)
-          resp <- Ok(user)
-        } yield resp
+    "Get user by id" ** "Users" @@ GET / "api" / "users" / pathVar[Int]("id") |>> { (id: Int) => users.get(id) }
 
-      case req @ POST -> Root / "users" =>
-        for {
-          body <- req.as[UserRequest]
-          _    <- users.create(body.email)
-          resp <- Ok()
-        } yield resp
+    ("Create a user" ** "Users" @@ POST / "api" / "users")
+      .decoding(jsonOf[IO, UserCreateRequest]) |>> { (r: UserCreateRequest) => users.create(r) }
 
-    }
+    ("Update a user" ** "Users" @@ POST / "api" / "users" / pathVar[Int]("id"))
+      .decoding(jsonOf[IO, UserUpdateRequest]) |>> { (id: Int, r: UserUpdateRequest) => users.update(r, id) }
+
   }
-
 }

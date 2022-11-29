@@ -1,42 +1,55 @@
 package scalacommerce.controller
 
 import cats.MonadError
-import cats.effect.IO
+import cats.implicits.catsSyntaxApplicativeError
+import cats.syntax.functor._
 import org.typelevel.log4cats.Logger
-import scalacommerce.model.UserResponse
+import scalacommerce.model.User
+import scalacommerce.model.fe.user.{ UserCreateRequest, UserCreateResponse, UserUpdateRequest, UserUpdateResponse }
 import scalacommerce.service.UserService
 
-import java.util.UUID
-
-class UserController(userService: UserService, logger: Logger[IO])(
-    implicit me: MonadError[IO, Throwable]
+class UserController[F[_]](userService: UserService[F], logger: Logger[F])(
+    implicit
+    me: MonadError[F, Throwable]
 ) {
 
-  def get(id: UUID): IO[Option[String]] =
+  def get(id: Int): F[Option[User]] =
     userService.get(id).handleErrorWith {
       case e =>
         logger
           .error(s"Got error while fetching user with id $id: ${e.getMessage}")
-          .map(_ => Option.empty[String])
+          .map(_ => Option.empty[User])
     }
 
-  def getAll(): IO[List[String]] =
-    userService.getAll.handleErrorWith {
+  def getAll(): F[List[User]] =
+    userService.getAll().handleErrorWith {
       case e =>
         logger
           .error(s"Got error while fetching users: ${e.getMessage}")
-          .map(_ => List.empty[String])
+          .map(_ => List.empty[User])
     }
 
-  def create(email: String): IO[UserResponse] =
+  def update(r: UserUpdateRequest, userId: Int): F[UserUpdateResponse] =
     userService
-      .create(email)
-      .map(id => UserResponse(id = Some(id)))
+      .update(r, userId)
+      .map(_ => UserUpdateResponse(persisted = true))
       .handleErrorWith {
         case e =>
-          val errorMsg = s"Got error while creating user with email $email: ${e.getMessage}"
+          val errorMsg = s"Got error while updating user with id $userId: ${e.getMessage}"
           logger
             .error(errorMsg)
-            .map(_ => UserResponse(error = Some(errorMsg)))
+            .map(_ => UserUpdateResponse(persisted = false, error = Some(errorMsg)))
+      }
+
+  def create(r: UserCreateRequest): F[UserCreateResponse] =
+    userService
+      .create(r)
+      .map(id => UserCreateResponse(id = Some(id)))
+      .handleErrorWith {
+        case e =>
+          val errorMsg = s"Got error while creating user ($r): ${e.getMessage}"
+          logger
+            .error(errorMsg)
+            .map(_ => UserCreateResponse(error = Some(errorMsg)))
       }
 }

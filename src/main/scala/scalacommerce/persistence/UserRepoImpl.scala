@@ -1,21 +1,39 @@
 package scalacommerce.persistence
 
-import doobie.free.connection.ConnectionIO
+import cats.effect.IO
 import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import scalacommerce.model.User
+import scalacommerce.model.fe.user.UserCreateRequest
 
-import java.util.UUID
+class UserRepoImpl(xa: Transactor[IO]) extends UserRepo[IO] {
 
-object UserRepoImpl extends UserRepo {
+  override def get(id: Int): IO[Option[User]] =
+    sql"""select * from users where id=$id""".query[User].option.transact(xa)
 
-  override def get(id: UUID): ConnectionIO[Option[String]] =
-    sql"""select email from users where id=$id""".query[Option[String]].unique
+  override def getAll(): IO[List[User]] =
+    sql"""select * from users""".query[User].to[List].transact(xa)
 
-  override def getAll(): ConnectionIO[List[String]] =
-    sql"""select email from users""".query[String].to[List]
+  override def update(user: User): IO[Unit] =
+    sql"""
+        update users
+            set email = ${user.email},
+            name = ${user.name},
+            surname = ${user.surname}
+        where id = ${user.id}
+       """
+      .update
+      .run
+      .transact(xa)
+      .void
 
-  override def create(email: String): ConnectionIO[Int] =
-    sql"""insert into users(id, email) values (${UUID.randomUUID()}, $email)"""
+  override def create(r: UserCreateRequest): IO[Int] = {
+    sql"""insert into users(email, name, surname)
+         values (${r.email}, ${r.name}, ${r.surname})"""
       .update
       .withUniqueGeneratedKeys[Int]("id")
+      .transact(xa)
+  }
 
 }

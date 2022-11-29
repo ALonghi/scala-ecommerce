@@ -1,1 +1,5 @@
-INSERT INTO users(id, email) values('f33f4247-938b-49cc-b8f7-a01d138ff26f', 'foo.bar@gmail.com')
+INSERT INTO users(email, name, surname)
+values ('foo@gmail.com', 'Fooname', 'Foosurname');
+INSERT INTO users(email, name, surname)
+values ('bar@gmail.com', 'Barname', 'Barsurname');
+

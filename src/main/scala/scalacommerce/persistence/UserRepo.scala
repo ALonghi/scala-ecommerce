@@ -1,12 +1,12 @@
 package scalacommerce.persistence
 
-import doobie.free.connection.ConnectionIO
+import scalacommerce.model.User
+import scalacommerce.model.fe.user.UserCreateRequest
 
-import java.util.UUID
+trait UserRepo[F[_]] {
 
-trait UserRepo {
-
-  def get(id: UUID): ConnectionIO[Option[String]]
-  def getAll(): ConnectionIO[List[String]]
-  def create(email: String): ConnectionIO[Int]
+  def get(id: Int): F[Option[User]]
+  def getAll(): F[List[User]]
+  def update(user: User): F[Unit]
+  def create(email: UserCreateRequest): F[Int]
 }
