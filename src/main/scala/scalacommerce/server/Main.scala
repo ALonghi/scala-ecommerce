@@ -15,9 +15,6 @@ object Main extends IOApp {
 
     (for {
       logger <- Resource.eval(Slf4jLogger.create[IO])
-      _ <- Resource.eval(logger.info(s"Db conf 1 is${DatabaseConfig.config}"))
-      _ <- Resource.eval(logger.info(s"Db conf 2 is${DatabaseIO.config}"))
-      _ <- Resource.eval(logger.info(s"Db kernel 2 is${dbTransactor.kernel}"))
       _ <- Resource.eval(FlywayMigration.migrate(DatabaseConfig.config, logger))
       userService = new UserService(userRepo, logger)
       userController = new UserController(userService, logger)
